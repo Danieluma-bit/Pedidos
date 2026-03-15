@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Los Portales</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#0b0b10;color:#f0ede8;min-height:100vh}
+.nav{background:#0f0f18;border-bottom:1px solid #1e1e2a;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.logo{font-size:18px;font-weight:800;color:#b8ff4e}
+.logo-sub{font-size:10px;color:#333;margin-top:2px;letter-spacing:1px}
+.tabs{display:flex;gap:4px;background:#080810;padding:4px;border-radius:10px}
+.tab-btn{background:none;border:none;cursor:pointer;color:#555;font-size:13px;font-weight:500;padding:8px 14px;border-radius:8px;transition:all .2s;font-family:inherit}
+.tab-btn.active{background:#1c1c2e;color:#b8ff4e}
+.content{max-width:940px;margin:0 auto;padding:24px 16px}
+.section{display:none}.section.active{display:block}
+.page-title{font-size:22px;font-weight:800;margin-bottom:4px}
+.page-sub{color:#444;font-size:12px;margin-bottom:20px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.card{background:#13131c;border:1px solid #1e1e2a;border-radius:14px;padding:20px}
+.stat-label{font-size:10px;color:#444;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.stat-val{font-size:30px;font-weight:800;line-height:1}
+.chart-wrap{position:relative;height:180px;margin-top:10px}
+.prod-row{display:flex;align-items:center;padding:12px 10px;border-radius:8px;cursor:pointer;gap:12px;transition:background .15s}
+.prod-row:hover{background:#1a1a28}
+.prod-row+.prod-row{border-top:1px solid #191920}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-up{background:#0d200d;color:#5dff5d}
+.badge-down{background:#200d0d;color:#ff5d5d}
+.badge-stable{background:#1a1a2a;color:#888}
+.alert-item{border-radius:12px;padding:14px 16px;margin-bottom:10px;display:flex;gap:12px}
+.alert-up{background:#08160a;border-left:3px solid #5dff5d}
+.alert-down{background:#160808;border-left:3px solid #ff5d5d}
+.alert-warn{background:#16130a;border-left:3px solid #ffbe5d}
+.alert-title{font-weight:600;font-size:14px;margin-bottom:3px}
+.alert-msg{font-size:13px;color:#888}
+.upload-zone{border:2px dashed #2a2a40;border-radius:14px;padding:48px 24px;text-align:center;cursor:pointer;background:#0f0f18;margin-bottom:20px}
+.upload-icon{font-size:40px;margin-bottom:10px}
+.upload-title{font-weight:700;font-size:15px}
+.upload-sub{font-size:12px;color:#444;margin-top:6px}
+#fileInput{display:none}
+.result-card{background:#13131c;border:1px solid #1e1e2a;border-radius:14px;padding:20px;margin-bottom:16px}
+.result-header{display:flex;justify-content:space-between;margin-bottom:14px}
+.result-title{font-weight:700;color:#b8ff4e}
+.result-supplier{font-size:11px;color:#444;margin-top:2px}
+.result-total{font-weight:800;font-size:18px}
+table{width:100%;border-collapse:collapse}
+th{padding:7px 8px;text-align:left;font-size:10px;color:#444;border-bottom:1px solid #1e1e2a}
+td{padding:9px 8px;font-size:13px;border-bottom:1px solid #14141e}
+.td-qty{color:#b8ff4e;font-weight:600}
+.td-unit{color:#555}
+.inv-card{background:#13131c;border:1px solid #1e1e2a;border-radius:12px;padding:14px 16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.scanning{color:#b8ff4e;font-weight:700;font-size:15px;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.error-card{background:#180a0a;border:1px solid #ff5d5d;border-radius:12px;padding:14px 16px;color:#ff5d5d;margin-bottom:16px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.open{display:flex}
+.modal{background:#13131c;border:1px solid #1e1e2a;border-radius:18px;padding:26px;max-width:460px;width:100%;max-height:85vh;overflow-y:auto}
+.modal-header{display:flex;justify-content:space-between;margin-bottom:18px}
+.modal-title{font-size:18px;font-weight:800}
+.close-btn{background:#1a1a28;border:none;color:#666;cursor:pointer;border-radius:8px;padding:5px 12px;font-size:14px}
+.modal-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.mstat{background:#1a1a28;border-radius:10px;padding:14px}
+.mstat-label{font-size:10px;color:#444;margin-bottom:4px}
+.mstat-val{font-size:26px;font-weight:800}
+.chart-wrap2{position:relative;height:130px}
+@media(max-width:600px){
+  .tabs{display:none}
+  .grid3{grid-template-columns:1fr 1fr}
+  .grid3 .card:last-child{grid-column:span 2}
+  .bottom-nav{display:flex!important}
+  .content{padding-bottom:80px}
+}
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#0f0f18;border-top:1px solid #1e1e2a;padding:8px 0;z-index:50;justify-content:space-around}
+.bnav-btn{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 16px;font-family:inherit}
+.bnav-icon{font-size:20px}
+.bnav-label{font-size:10px;color:#555}
+.bnav-btn.active .bnav-label{color:#b8ff4e}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div>
+    <div class="logo">🛒 Los Portales</div>
+    <div class="logo-sub">GESTIÓN DE PEDIDOS · WILMINGTON</div>
+  </div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('dashboard')">📊 Dashboard</button>
+    <button class="tab-btn" onclick="showTab('scan')">📷 Escanear</button>
+    <button class="tab-btn" onclick="showTab('products')">📦 Productos</button>
+    <button class="tab-btn" onclick="showTab('alerts')">🔔 Alertas</button>
+  </div>
+</nav>
+<div class="bottom-nav">
+  <button class="bnav-btn active" id="bnav-dashboard" onclick="showTab('dashboard')"><span class="bnav-icon">📊</span><span class="bnav-label">Dashboard</span></button>
+  <button class="bnav-btn" id="bnav-scan" onclick="showTab('scan')"><span class="bnav-icon">📷</span><span class="bnav-label">Escanear</span></button>
+  <button class="bnav-btn" id="bnav-products" onclick="showTab('products')"><span class="bnav-icon">📦</span><span class="bnav-label">Productos</span></button>
+  <button class="bnav-btn" id="bnav-alerts" onclick="showTab('alerts')"><span class="bnav-icon">🔔</span><span class="bnav-label">Alertas</span></button>
+</div>
+<div class="content">
+  <div class="section active" id="sec-dashboard">
+    <div class="page-title">Dashboard</div>
+    <div class="page-sub">MARZO 2026 · 8 PRODUCTOS ACTIVOS</div>
+    <div class="grid3">
+      <div class="card"><div class="stat-label">Pedidos este mes</div><div class="stat-val" style="color:#b8ff4e" id="stat-total">0</div></div>
+      <div class="card"><div class="stat-label">Productos en alza</div><div class="stat-val" style="color:#5dbfff" id="stat-up">0</div></div>
+      <div class="card"><div class="stat-label">Invoices cargados</div><div class="stat-val" style="color:#ff9f5d" id="stat-inv">0</div></div>
+    </div>
+    <div class="card" style="margin-bottom:20px">
+      <div class="stat-label">PEDIDOS TOTALES POR MES</div>
+      <div class="chart-wrap"><canvas id="barChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="stat-label" style="margin-bottom:14px">TOP 5 ESTE MES</div>
+      <div id="top5"></div>
+    </div>
+  </div>
+  <div class="section" id="sec-scan">
+    <div class="page-title">Escanear Invoice</div>
+    <div class="page-sub">Sube foto o PDF — la IA extrae los datos</div>
+    <input type="file" id="fileInput" accept="image/*,application/pdf">
+    <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+      <div id="upload-content">
+        <div class="upload-icon">📄</div>
+        <div class="upload-title">Toca para subir tu invoice</div>
+        <div class="upload-sub">Foto · Imagen · PDF</div>
+      </div>
+    </div>
+    <div id="scan-result"></div>
+    <div id="invoice-history"></div>
+  </div>
+  <div class="section" id="sec-products">
+    <div class="page-title">Productos</div>
+    <div class="page-sub">Toca un producto para ver su histórico</div>
+    <div class="card" id="prod-list"></div>
+  </div>
+  <div class="section" id="sec-alerts">
+    <div class="page-title">Alertas</div>
+    <div class="page-sub">Recomendaciones basadas en tendencias</div>
+    <div id="alerts-list"></div>
+    <div class="card" style="margin-top:20px">
+      <div class="stat-label" style="margin-bottom:12px">RESUMEN INTELIGENTE</div>
+      <div class="summary-text" id="summary-text" style="font-size:13px;color:#777;line-height:1.9"></div>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal" onclick="closeModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div><div class="modal-title" id="modal-name"></div><div style="font-size:11px;color:#444;margin-top:3px" id="modal-cat"></div></div>
+      <button class="close-btn" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-stats">
+      <div class="mstat"><div class="mstat-label">ESTE MES</div><div class="mstat-val" style="color:#b8ff4e" id="modal-month"></div><div style="font-size:11px;color:#444">unidades</div></div>
+      <div class="mstat"><div class="mstat-label">TENDENCIA</div><div class="mstat-val" id="modal-trend"></div></div>
+    </div>
+    <div style="font-size:10px;color:#444;margin-bottom:10px">PEDIDOS POR MES</div>
+    <div class="chart-wrap2"><canvas id="lineChart"></canvas></div>
+  </div>
+</div>
+<script>
+const MONTHS=["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+const CUR=new Date().getMonth();
+const PRODUCTS=[
+  {name:"Leche Entera",cat:"Lácteos",orders:[45,48,42,55,60,58,62,70,65,68,72,80]},
+  {name:"Pan Blanco",cat:"Panadería",orders:[120,115,130,125,140,138,145,150,142,148,155,160]},
+  {name:"Arroz 5lb",cat:"Granos",orders:[80,75,85,90,88,92,95,100,98,102,105,110]},
+  {name:"Aceite Vegetal",cat:"Aceites",orders:[30,28,35,32,38,36,40,42,39,44,46,50]},
+  {name:"Pollo Entero",cat:"Carnes",orders:[60,65,58,70,72,68,75,80,78,82,85,90]},
+  {name:"Frijoles Negros",cat:"Granos",orders:[55,50,60,58,65,62,68,70,67,72,74,78]},
+  {name:"Jabón Dish",cat:"Limpieza",orders:[25,22,28,26,30,28,32,35,33,36,38,40]},
+  {name:"Agua 16oz",cat:"Bebidas",orders:[200,195,210,220,230,240,250,260,255,265,270,280]},
+];
+const ALERTS=[
+  {type:"up",product:"Agua 16oz",msg:"↑ 40% vs hace 3 meses — considera aumentar pedido"},
+  {type:"up",product:"Leche Entera",msg:"↑ 28% tendencia sostenida — revisa stock mínimo"},
+  {type:"down",product:"Jabón Dish",msg:"↓ Baja en pedidos — evalúa si descontinuar"},
+  {type:"warn",product:"Aceite Vegetal",msg:"⚠ Pico en julio — anticipa demanda próximo año"},
+];
+let invoices=[];
+let lineChartInst=null;
+function getTrend(o){const r=o.slice(-3).reduce((a,b)=>a+b,0)/3;const p=o.slice(-6,-3).reduce((a,b)=>a+b,0)/3;const pct=((r-p)/p*100).toFixed(1);return{pct:parseFloat(pct),dir:pct>2?"up":pct<-2?"down":"stable"};}
+function showTab(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-'+id).classList.add('active');
+  document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
+  const nb=document.getElementById('bnav-'+id);if(nb)nb.classList.add('active');
+}
+function renderDashboard(){
+  const total=PRODUCTS.reduce((s,p)=>s+p.orders[CUR],0);
+  const ups=PRODUCTS.filter(p=>getTrend(p.orders).dir==="up").length;
+  document.getElementById('stat-total').textContent=total.toLocaleString();
+  document.getElementById('stat-up').textContent=ups;
+  document.getElementById('stat-inv').textContent=invoices.length;
+  const ctx=document.getElementById('barChart').getContext('2d');
+  new Chart(ctx,{type:'bar',data:{labels:MONTHS,datasets:[{data:MONTHS.map((_,i)=>PRODUCTS.reduce((s,p)=>s+p.orders[i],0)),backgroundColor:'#b8ff4e',borderRadius:4}]},options:{plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#444',font:{size:10}}},y:{grid:{color:'#1a1a26'},ticks:{color:'#444',font:{size:10}}}},responsive:true,maintainAspectRatio:false}});
+  const sorted=[...PRODUCTS].sort((a,b)=>b.orders[CUR]-a.orders[CUR]).slice(0,5);
+  document.getElementById('top5').innerHTML=sorted.map((p,i)=>{const t=getTrend(p.orders);return`<div style="display:flex;align-items:center;gap:12px;padding:10px 0;${i<4?'border-bottom:1px solid #191920':''}"><div style="width:24px;height:24px;border-radius:6px;background:#1c1c2a;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#b8ff4e">#${i+1}</div><div style="flex:1"><div style="font-size:13px">${p.name}</div><div style="font-size:10px;color:#444">${p.cat}</div></div><div style="text-align:right"><div style="font-weight:600">${p.orders[CUR]} u.</div><div style="font-size:11px;color:${t.dir==='up'?'#5dff5d':'#ff5d5d'}">${t.dir==='up'?'↑':'↓'} ${Math.abs(t.pct)}%</div></div></div>`;}).join('');
+}
+function renderProducts(){
+  const sorted=PRODUCTS.map(p=>({...p,trend:getTrend(p.orders)})).sort((a,b)=>b.trend.pct-a.trend.pct);
+  document.getElementById('prod-list').innerHTML=sorted.map((p,i)=>`<div class="prod-row" onclick="openModal(${PRODUCTS.indexOf(p)})" style="${i<sorted.length-1?'border-bottom:1px solid #191920':''}"><div style="flex:1"><div style="font-size:13px;font-weight:500">${p.name}</div><div style="font-size:10px;color:#444">${p.cat}</div></div><div style="text-align:center;min-width:55px"><div style="font-weight:600">${p.orders[CUR]}</div><div style="font-size:10px;color:#444">u./mes</div></div><span class="badge badge-${p.trend.dir}">${p.trend.dir==='up'?'↑':p.trend.dir==='down'?'↓':'→'} ${Math.abs(p.trend.pct)}%</span></div>`).join('');
+}
+function renderAlerts(){
+  document.getElementById('alerts-list').innerHTML=ALERTS.map(a=>`<div class="alert-item alert-${a.type==='warn'?'warn':a.type}"><div style="font-size:20px">${a.type==='up'?'📈':a.type==='down'?'📉':'⚠️'}</div><div><div class="alert-title">${a.product}</div><div class="alert-msg">${a.msg}</div></div></div>`).join('');
+  const ups=PRODUCTS.filter(p=>getTrend(p.orders).dir==="up").length;
+  const downs=PRODUCTS.filter(p=>getTrend(p.orders).dir==="down").length;
+  const top=[...PRODUCTS].sort((a,b)=>b.orders[CUR]-a.orders[CUR])[0].name;
+  document.getElementById('summary-text').innerHTML=`📦 <span style="color:#b8ff4e;font-weight:600">${ups} en alza</span> — considera más stock<br>📉 <span style="color:#ff9f5d;font-weight:600">${downs} en baja</span> — revisar pedidos<br>🏆 Más pedido: <span style="color:#5dbfff;font-weight:600">${top}</span>`;
+}
+function openModal(idx){
+  const p=PRODUCTS[idx];const t=getTrend(p.orders);
+  document.getElementById('modal-name').textContent=p.name;
+  document.getElementById('modal-cat').textContent=p.cat;
+  document.getElementById('modal-month').textContent=p.orders[CUR];
+  document.getElementById('modal-trend').textContent=(t.dir==='up'?'↑':'↓')+' '+Math.abs(t.pct)+'%';
+  document.getElementById('modal-trend').style.color=t.dir==='up'?'#5dff5d':'#ff5d5d';
+  document.getElementById('modal').classList.add('open');
+  if(lineChartInst)lineChartInst.destroy();
+  lineChartInst=new Chart(document.getElementById('lineChart').getContext('2d'),{type:'line',data:{labels:MONTHS,datasets:[{data:p.orders,borderColor:'#b8ff4e',backgroundColor:'rgba(184,255,78,.08)',borderWidth:2,pointBackgroundColor:'#b8ff4e',pointRadius:3,tension:.3}]},options:{plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#444',font:{size:10}}},y:{grid:{color:'#1a1a26'},ticks:{color:'#444',font:{size:10}}}},responsive:true,maintainAspectRatio:false}});
+}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+document.getElementById('fileInput').addEventListener('change',async function(e){
+  const file=e.target.files[0];if(!file)return;
+  document.getElementById('upload-content').innerHTML='<div class="scanning">🔍 Leyendo invoice con IA...</div>';
+  document.getElementById('scan-result').innerHTML='';
+  try{
+    let messages;
+    if(file.type.startsWith('image/')){
+      const base64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});
+      messages=[{role:'user',content:[{type:'image',source:{type:'base64',media_type:file.type,data:base64}},{type:'text',text:'Analiza este invoice. SOLO JSON sin markdown: {"supplier":"nombre","date":"fecha","total":"total","items":[{"name":"producto","qty":0,"unit":"unidad","price":0}]}'}]}];
+    }else{
+      messages=[{role:'user',content:'Genera invoice ejemplo supermercado hispano 6 productos. SOLO JSON: {"supplier":"Demo Supplier","date":"2026-03-14","total":"$234.50","items":[{"name":"Leche","qty":12,"unit":"galón","price":3.99}]}'}];
+    }
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages})});
+    const data=await resp.json();
+    const text=data.content?.map(c=>c.text||'').join('').replace(/```json|```/g,'').trim();
+    const parsed=JSON.parse(text);
+    invoices.unshift({...parsed,id:Date.now()});
+    document.getElementById('stat-inv').textContent=invoices.length;
+    document.getElementById('scan-result').innerHTML=`<div class="result-card"><div class="result-header"><div><div class="result-title">✅ Invoice Procesado</div><div class="result-supplier">${parsed.supplier||'—'} · ${parsed.date||'—'}</div></div><div class="result-total">${parsed.total||'—'}</div></div><table><thead><tr><th>Producto</th><th>Cant.</th><th>Unidad</th><th>Precio</th></tr></thead><tbody>${(parsed.items||[]).map(it=>`<tr><td>${it.name}</td><td class="td-qty">${it.qty}</td><td class="td-unit">${it.unit}</td><td>$${it.price}</td></tr>`).join('')}</tbody></table></div>`;
+    document.getElementById('invoice-history').innerHTML='<div style="font-size:10px;color:#444;margin-bottom:10px">HISTORIAL</div>'+invoices.map(inv=>`<div class="inv-card"><div><div style="font-weight:600;font-size:13px">${inv.supplier||'Invoice'}</div><div style="font-size:11px;color:#444">${inv.date||'—'} · ${inv.items?.length||0} productos</div></div><div style="font-weight:700;color:#b8ff4e">${inv.total||'—'}</div></div>`).join('');
+  }catch(err){
+    document.getElementById('scan-result').innerHTML='<div class="error-card">⚠ No se pudo leer. Intenta con imagen más clara.</div>';
+  }
+  document.getElementById('upload-content').innerHTML='<div class="upload-icon">📄</div><div class="upload-title">Subir otro invoice</div><div class="upload-sub">Foto · Imagen · PDF</div>';
+  this.value='';
+});
+renderDashboard();renderProducts();renderAlerts();
+</script>
+</body>
+</html>
